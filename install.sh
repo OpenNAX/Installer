@@ -1,3 +1,5 @@
+#!/bin/sh
+
 VERSION="v1.0.0"
 
 RED='\033[1;31m'
@@ -8,7 +10,7 @@ NC='\033[0m'
 BOLD='\033[1m'
 
 clear
-echo -e "${CYAN}${BOLD}"
+printf "%b\n" "${CYAN}${BOLD}"
 echo "    ███████                                  ██████   █████   █████████   █████ █████ "
 echo "  ███░░░░░███                               ░░██████ ░░███   ███░░░░░███ ░░███ ░░███  "
 echo " ███     ░░███ ████████   ██████  ████████   ░███░███ ░███  ░███    ░███  ░░███ ███   "
@@ -18,40 +20,41 @@ echo "░░███     ███  ░███ ░███░███░░
 echo " ░░░███████░   ░███████ ░░██████  ████ █████ █████  ░░█████ █████   █████ █████ █████ "
 echo "   ░░░░░░░     ░███░░░   ░░░░░░  ░░░░ ░░░░░ ░░░░░    ░░░░░ ░░░░░   ░░░░░ ░░░░░ ░░░░░  "
 echo "               ░███                                                                   "
-echo -e "               █████"
-echo -e "              ░░░░░                                                                   ${NC}"
+printf "%b\n" "               █████"
+printf "%b\n" "              ░░░░░                                                                   ${NC}"
 echo ""
 
-print_info() { echo -e "${CYAN}[*] $1${NC}"; }
-print_success() { echo -e "${GREEN}[+] $1${NC}"; }
-print_warning() { echo -e "${YELLOW}[!] $1${NC}"; }
-print_error() { echo -e "${RED}[ERROR] $1${NC}"; exit 1; }
+print_info() { printf "%b\n" "${CYAN}[*] $1${NC}"; }
+print_success() { printf "%b\n" "${GREEN}[+] $1${NC}"; }
+print_warning() { printf "%b\n" "${YELLOW}[!] $1${NC}"; }
+print_error() { printf "%b\n" "${RED}[ERROR] $1${NC}"; exit 1; }
 
 CLEANUP_ZIP=""
 CLEANUP_DIR=""
 
 cleanup() {
-    local EXIT_CODE=$?
-    if [[ -n "$CLEANUP_ZIP" ]] || [[ -n "$CLEANUP_DIR" ]]; then
-        echo -e "\n${YELLOW}[!] Installation interrupted or failed. Rolling back changes...${NC}"
-        if [[ -n "$CLEANUP_ZIP" && -f "$CLEANUP_ZIP" ]]; then
+    EXIT_CODE=$?
+    if [ -n "$CLEANUP_ZIP" ] || [ -n "$CLEANUP_DIR" ]; then
+        echo ""
+        print_warning "Installation interrupted or failed. Rolling back changes..."
+        if [ -n "$CLEANUP_ZIP" ] && [ -f "$CLEANUP_ZIP" ]; then
             rm -f "$CLEANUP_ZIP"
-            print_info "[!] Removed incomplete download: $CLEANUP_ZIP"
+            print_warning "Removed incomplete download: $CLEANUP_ZIP"
         fi
-        if [[ -n "$CLEANUP_DIR" && -d "$CLEANUP_DIR" ]]; then
+        if [ -n "$CLEANUP_DIR" ] && [ -d "$CLEANUP_DIR" ]; then
             rm -rf "$CLEANUP_DIR"
-            print_info "[!] Removed incomplete extraction: $CLEANUP_DIR"
+            print_warning "Removed incomplete extraction: $CLEANUP_DIR"
         fi
     fi
     exit $EXIT_CODE
 }
 
-trap cleanup SIGINT SIGTERM SIGHUP EXIT
+trap cleanup INT TERM HUP EXIT
 
 OS_TYPE="unknown"
-if [[ -n "$TERMUX_VERSION" ]]; then
+if [ -n "$TERMUX_VERSION" ]; then
     OS_TYPE="termux"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+elif [ "$(uname -s)" = "Darwin" ]; then
     OS_TYPE="macos"
 elif command -v apt >/dev/null 2>&1; then
     OS_TYPE="debian"
@@ -60,21 +63,21 @@ elif command -v dnf >/dev/null 2>&1; then
 elif command -v pacman >/dev/null 2>&1; then
     OS_TYPE="arch"
 else
-    print_warning "[!] Unsupported OS. Proceeding with manual dependency assumptions."
+    print_warning "Unsupported OS. Proceeding with manual dependency assumptions."
 fi
 
 check_deps() {
-    if [[ "$OS_TYPE" == "macos" ]]; then
+    if [ "$OS_TYPE" = "macos" ]; then
         return
     fi
 
-    local NEEDS_INSTALL=0
+    NEEDS_INSTALL=0
     if ! command -v unzip >/dev/null 2>&1; then
         NEEDS_INSTALL=1
     fi
 
-    if [[ "$NEEDS_INSTALL" -eq 1 ]]; then
-        print_info "[*] Installing missing minimal dependencies (unzip)..."
+    if [ "$NEEDS_INSTALL" -eq 1 ]; then
+        print_info "Installing missing minimal dependencies (unzip)..."
         case "$OS_TYPE" in
             "termux")
                 pkg update -y > /dev/null 2>&1
@@ -91,27 +94,27 @@ check_deps() {
                 sudo pacman -Sy unzip --noconfirm > /dev/null 2>&1
                 ;;
             *)
-                print_error "[!] Required tools ('unzip') are missing and could not be installed automatically."
+                print_error "Required tools ('unzip') are missing and could not be installed automatically."
                 ;;
         esac
     fi
 }
 
 install_project() {
-    local PROJ_NAME=$1
-    local ZIP_URL="https://github.com/OpenNAX/${PROJ_NAME}/archive/refs/heads/main.zip"
-    local ZIP_FILE="${PROJ_NAME}.zip"
-    local EXTRACT_DIR="${PROJ_NAME}-main"
+    PROJ_NAME=$1
+    ZIP_URL="https://github.com/OpenNAX/${PROJ_NAME}/archive/refs/heads/main.zip"
+    ZIP_FILE="${PROJ_NAME}.zip"
+    EXTRACT_DIR="${PROJ_NAME}-main"
 
     CLEANUP_ZIP="$ZIP_FILE"
     CLEANUP_DIR="$EXTRACT_DIR"
 
     echo ""
-    print_info "[*] Downloading ${PROJ_NAME}..."
-    curl -s -L -o "$ZIP_FILE" "$ZIP_URL" || print_error "[!] Failed to download ${PROJ_NAME}. Check your connection."
+    print_info "Downloading ${PROJ_NAME}..."
+    curl -s -L -o "$ZIP_FILE" "$ZIP_URL" || print_error "Failed to download ${PROJ_NAME}. Check your connection."
     
-    print_info "[*] Extracting ${PROJ_NAME}..."
-    unzip -q -o "$ZIP_FILE" || print_error "[!] Failed to extract ${PROJ_NAME}. Zip file may be corrupted."
+    print_info "Extracting ${PROJ_NAME}..."
+    unzip -q -o "$ZIP_FILE" || print_error "Failed to extract ${PROJ_NAME}. Zip file may be corrupted."
     
     rm -rf "${PROJ_NAME}"
     mv "$EXTRACT_DIR" "${PROJ_NAME}"
@@ -124,21 +127,22 @@ install_project() {
     CLEANUP_ZIP=""
     CLEANUP_DIR=""
 
-    print_success "[+] ${PROJ_NAME} installed in ./${PROJ_NAME}/"
+    print_success "${PROJ_NAME} installed in ./${PROJ_NAME}/"
 }
 
-echo -e "What would you like to install?\n"
-echo -e "  ${BOLD}1)${NC} OpenNAX AILab"
-echo -e "  ${BOLD}2)${NC} OpenNAX NetLab"
-echo -e "  ${BOLD}3)${NC} Both (AILab & NetLab)"
-echo -e "  ${BOLD}0)${NC} Exit"
+printf "%b\n" "What would you like to install?\n"
+printf "%b\n" "  ${BOLD}1)${NC} OpenNAX AILab"
+printf "%b\n" "  ${BOLD}2)${NC} OpenNAX NetLab"
+printf "%b\n" "  ${BOLD}3)${NC} Both (AILab & NetLab)"
+printf "%b\n" "  ${BOLD}0)${NC} Exit"
 echo ""
 
 if [ -t 0 ]; then
-    read -p "Select an option [0-3] (Default: 3): " choice
+    printf "Select an option [0-3] (Default: 3): "
+    read choice
     choice=${choice:-3}
 else
-    echo "[*] Non-interactive mode detected. Defaulting to 3 (Both)."
+    print_info "Non-interactive mode detected. Defaulting to 3 (Both)."
     choice=3
 fi
 
@@ -157,15 +161,15 @@ case $choice in
         install_project "NetLab"
         ;;
     0)
-        print_info "[*] Exiting..."
+        print_info "Exiting..."
         exit 0
         ;;
     *)
-        print_error "[!] Invalid option selected."
+        print_error "Invalid option selected."
         ;;
 esac
 
 echo ""
-echo -e "${GREEN}-----------------------------------------------------${NC}"
-echo -e "${BOLD}Installation complete!${NC}"
-echo -e "${GREEN}-----------------------------------------------------${NC}"
+printf "%b\n" "${GREEN}-----------------------------------------------------${NC}"
+printf "%b\n" "${BOLD}Installation complete!${NC}"
+printf "%b\n" "${GREEN}-----------------------------------------------------${NC}"
