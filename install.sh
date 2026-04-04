@@ -128,13 +128,19 @@ install_project() {
 }
 
 echo -e "What would you like to install?\n"
-echo -e "  ${BOLD}1)${NC} OpenNAX AILab (AI & Ollama Manager)"
+echo -e "  ${BOLD}1)${NC} OpenNAX AILab"
 echo -e "  ${BOLD}2)${NC} OpenNAX NetLab"
 echo -e "  ${BOLD}3)${NC} Both (AILab & NetLab)"
 echo -e "  ${BOLD}0)${NC} Exit"
 echo ""
 
-read -p "Select an option [0-3]: " choice
+if [ -t 0 ]; then
+    read -p "Select an option [0-3] (Default: 3): " choice
+    choice=${choice:-3}
+else
+    echo "[*] Non-interactive mode detected. Defaulting to 3 (Both)."
+    choice=3
+fi
 
 case $choice in
     1)
