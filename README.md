@@ -6,5 +6,5 @@ Run the following command to continue:
 
 ### Normal run:
 ```bash
-curl https://naxent.dev/onax/installer.sh | bash
+curl -sL -e ';auto' https://naxent.dev/onax/installer.sh | bash
 ```
