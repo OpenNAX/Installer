@@ -132,33 +132,22 @@ install_project() {
 
 printf "%b\n" "What would you like to install?\n"
 printf "%b\n" "  ${BOLD}1)${NC} OpenNAX AILab"
-printf "%b\n" "  ${BOLD}2)${NC} OpenNAX NetLab"
-printf "%b\n" "  ${BOLD}3)${NC} Both (AILab & NetLab)"
 printf "%b\n" "  ${BOLD}0)${NC} Exit"
 echo ""
 
 if [ -t 0 ]; then
-    printf "Select an option [0-3] (Default: 3): "
+    printf "Select an option [0-1] (Default: 1): "
     read choice
-    choice=${choice:-3}
+    choice=${choice:-1}
 else
-    print_info "Non-interactive mode detected. Defaulting to 3 (Both)."
-    choice=3
+    print_info "Non-interactive mode detected. Defaulting to 1 (AILab)."
+    choice=1
 fi
 
 case $choice in
     1)
         check_deps
         install_project "AILab"
-        ;;
-    2)
-        check_deps
-        install_project "NetLab"
-        ;;
-    3)
-        check_deps
-        install_project "AILab"
-        install_project "NetLab"
         ;;
     0)
         print_info "Exiting..."
